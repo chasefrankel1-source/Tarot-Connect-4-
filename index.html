@@ -1,0 +1,2586 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="theme-color" content="#090412" />
+  <title>Amethyst Connect Four — Tarot Trilogy</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    :root {
+      --bg-obsidian: #090412;
+      --bg-velvet: #130826;
+      --amethyst-core: #9333ea;
+      --amethyst-bright: #c084fc;
+      --amethyst-glow: rgba(168, 85, 247, 0.55);
+      --gold-core: #f59e0b;
+      --gold-bright: #fde68a;
+      --gold-glow: rgba(251, 191, 36, 0.55);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+
+    input, textarea {
+      user-select: text;
+    }
+
+    body {
+      background: radial-gradient(circle at 50% 0%, #240e46 0%, #100620 48%, #07030f 100%);
+      color: #f5f3ff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+      margin: 0;
+    }
+
+    .font-serif-luxury {
+      font-family: "Cormorant Garamond", "Playfair Display", Georgia, "Times New Roman", serif;
+      letter-spacing: 0.04em;
+    }
+
+    .velvet-card {
+      background: linear-gradient(145deg, rgba(32, 14, 60, 0.85) 0%, rgba(15, 7, 30, 0.94) 100%);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      border: 1px solid rgba(192, 132, 252, 0.22);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.65),
+        inset 0 1px 0 rgba(253, 230, 138, 0.16),
+        0 0 35px rgba(147, 51, 234, 0.14);
+    }
+
+    .gold-border-glow {
+      border: 1px solid rgba(251, 191, 36, 0.38);
+      box-shadow:
+        0 12px 36px rgba(0, 0, 0, 0.6),
+        0 0 24px rgba(251, 191, 36, 0.14),
+        inset 0 1px 0 rgba(254, 240, 138, 0.25);
+    }
+
+    .board-container {
+      background: linear-gradient(165deg, rgba(38, 16, 72, 0.9) 0%, rgba(16, 7, 34, 0.96) 100%);
+      border: 1.5px solid rgba(251, 191, 36, 0.28);
+      box-shadow:
+        0 24px 60px rgba(0, 0, 0, 0.78),
+        0 0 40px rgba(147, 51, 234, 0.22),
+        inset 0 2px 12px rgba(192, 132, 252, 0.18),
+        inset 0 -4px 16px rgba(0, 0, 0, 0.7);
+      position: relative;
+    }
+
+    .board-slot {
+      background: radial-gradient(circle at 50% 38%, #07030e 0%, #0d051c 72%, #1a0b36 100%);
+      box-shadow:
+        inset 0 4px 9px rgba(0, 0, 0, 0.88),
+        inset 0 -1px 2px rgba(192, 132, 252, 0.22),
+        0 1px 0 rgba(253, 230, 138, 0.12);
+      position: relative;
+      overflow: visible;
+      transition: transform 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    .column-highlight .board-slot {
+      box-shadow:
+        inset 0 4px 9px rgba(0, 0, 0, 0.85),
+        inset 0 0 8px rgba(192, 132, 252, 0.28),
+        0 0 6px rgba(251, 191, 36, 0.18);
+    }
+
+    .token-amethyst {
+      background: radial-gradient(circle at 32% 28%, #f3e8ff 0%, #c084fc 22%, #9333ea 56%, #581c87 88%, #3b0764 100%);
+      box-shadow:
+        0 0 18px rgba(168, 85, 247, 0.65),
+        inset 0 2px 5px rgba(255, 255, 255, 0.55),
+        inset 0 -3px 6px rgba(29, 4, 54, 0.8);
+      border: 1.5px solid rgba(233, 213, 255, 0.65);
+    }
+
+    .token-gold {
+      background: radial-gradient(circle at 32% 28%, #fef9c3 0%, #fde047 22%, #f59e0b 58%, #b45309 88%, #78350f 100%);
+      box-shadow:
+        0 0 18px rgba(251, 191, 36, 0.65),
+        inset 0 2px 5px rgba(255, 255, 255, 0.7),
+        inset 0 -3px 6px rgba(69, 26, 3, 0.85);
+      border: 1.5px solid rgba(254, 240, 138, 0.8);
+    }
+
+    @keyframes dropBounce {
+      0% {
+        transform: translateY(var(--drop-start, -320px)) scale(0.92, 1.08);
+        opacity: 0.7;
+      }
+      62% {
+        transform: translateY(0px) scale(1.12, 0.88);
+        opacity: 1;
+      }
+      78% {
+        transform: translateY(-14px) scale(0.96, 1.04);
+      }
+      90% {
+        transform: translateY(0px) scale(1.04, 0.96);
+      }
+      96% {
+        transform: translateY(-4px) scale(0.99, 1.01);
+      }
+      100% {
+        transform: translateY(0px) scale(1, 1);
+        opacity: 1;
+      }
+    }
+
+    .animate-drop {
+      animation: dropBounce var(--drop-duration, 0.48s) cubic-bezier(0.22, 0.61, 0.36, 1) forwards;
+    }
+
+    @keyframes hapticBump {
+      0% { transform: translateY(0) scale(1); }
+      35% { transform: translateY(3.5px) scale(0.996); }
+      70% { transform: translateY(-1.5px) scale(1.002); }
+      100% { transform: translateY(0) scale(1); }
+    }
+
+    .haptic-pop {
+      animation: hapticBump 0.22s ease-out;
+    }
+
+    @keyframes impactRipple {
+      0% {
+        transform: scale(0.75);
+        opacity: 0.95;
+      }
+      100% {
+        transform: scale(2.15);
+        opacity: 0;
+      }
+    }
+
+    .ripple-ring {
+      position: absolute;
+      inset: -2px;
+      border-radius: 9999px;
+      pointer-events: none;
+      animation: impactRipple 0.52s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes winPulse {
+      0%, 100% {
+        transform: scale(1);
+        filter: brightness(1.05);
+      }
+      50% {
+        transform: scale(1.12);
+        filter: brightness(1.32) drop-shadow(0 0 14px rgba(253, 230, 138, 0.95));
+      }
+    }
+
+    .winning-token {
+      animation: winPulse 1.15s ease-in-out infinite;
+      z-index: 20;
+      border-color: #ffffff !important;
+    }
+
+    .perspective-stage {
+      perspective: 1400px;
+    }
+
+    .tarot-card-3d {
+      transform-style: preserve-3d;
+      transition: transform 0.85s cubic-bezier(0.34, 1.45, 0.64, 1), box-shadow 0.4s ease;
+      position: relative;
+    }
+
+    .tarot-card-3d.is-flipped {
+      transform: rotateY(180deg);
+    }
+
+    .tarot-face {
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
+      position: absolute;
+      inset: 0;
+      border-radius: 1.25rem;
+    }
+
+    .tarot-face-back {
+      background: linear-gradient(155deg, #270e4d 0%, #14062b 52%, #0b031a 100%);
+      border: 2px solid rgba(251, 191, 36, 0.55);
+      box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(168, 85, 247, 0.35),
+        inset 0 0 25px rgba(251, 191, 36, 0.15);
+    }
+
+    .tarot-face-front {
+      transform: rotateY(180deg);
+      background: linear-gradient(165deg, #240c47 0%, #130629 55%, #0b0318 100%);
+      border: 2px solid rgba(253, 224, 71, 0.72);
+      box-shadow:
+        0 25px 65px rgba(0, 0, 0, 0.88),
+        0 0 45px rgba(168, 85, 247, 0.45),
+        0 0 20px rgba(251, 191, 36, 0.3),
+        inset 0 0 30px rgba(192, 132, 252, 0.16);
+    }
+
+    .spread-pick-card {
+      transition: transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.32s ease, border-color 0.32s ease;
+    }
+    .spread-pick-card:hover:not(:disabled) {
+      transform: translateY(-10px) scale(1.04);
+      border-color: rgba(253, 224, 71, 0.9);
+      box-shadow: 0 18px 36px rgba(0, 0, 0, 0.75), 0 0 28px rgba(251, 191, 36, 0.4);
+    }
+
+    .btn-luxury {
+      background: linear-gradient(135deg, #9333ea 0%, #7e22ce 50%, #b45309 100%);
+      border: 1px solid rgba(253, 224, 71, 0.48);
+      box-shadow: 0 8px 25px rgba(147, 51, 234, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+      transition: all 0.2s ease;
+    }
+    .btn-luxury:hover:not(:disabled) {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 30px rgba(168, 85, 247, 0.58), 0 0 18px rgba(251, 191, 36, 0.35);
+      filter: brightness(1.08);
+    }
+    .btn-luxury:active:not(:disabled) {
+      transform: translateY(1px) scale(0.99);
+    }
+    .btn-luxury:disabled {
+      opacity: 0.42;
+      cursor: not-allowed;
+      filter: grayscale(0.35);
+    }
+
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: rgba(15, 7, 30, 0.6);
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(168, 85, 247, 0.45);
+      border-radius: 9999px;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen flex flex-col justify-between py-3 px-3 sm:px-6">
+
+  <canvas id="fx-canvas" class="fixed inset-0 pointer-events-none z-0"></canvas>
+
+  <div class="relative z-10 w-full max-w-lg mx-auto flex flex-col gap-3 my-auto">
+
+    <!-- Top Brand & Trilogy Tracker Bar -->
+    <header class="velvet-card rounded-2xl px-3.5 py-2.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center bg-gradient-to-br from-purple-600/40 to-amber-500/30 border border-amber-300/40 shadow-inner shrink-0">
+          <svg class="w-5 h-5 text-amber-300" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M12 2L14.8 8.8L22 9.5L16.5 14.2L18.2 21.2L12 17.4L5.8 21.2L7.5 14.2L2 9.5L9.2 8.8L12 2Z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <h1 class="font-serif-luxury text-base sm:text-xl font-bold tracking-wide bg-gradient-to-r from-purple-200 via-amber-200 to-purple-300 bg-clip-text text-transparent">
+              AMETHYST IV
+            </h1>
+            <span class="text-xs px-2 py-0.5 rounded-full bg-purple-950/90 border border-amber-400/30 text-amber-200/90 font-medium">
+              Tarot Trilogy
+            </span>
+          </div>
+          <p class="text-xs text-purple-300/75" id="trilogy-subtitle">Bunch of 3 · Round 1 of 3</p>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-1.5">
+        <!-- Invite / Live Multiplayer Button -->
+        <button onclick="openMultiplayerModal()" id="btn-live-mp"
+          class="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-purple-900/90 to-amber-900/50 hover:from-purple-800 hover:to-amber-800/60 border border-amber-300/45 text-xs font-semibold text-amber-200 flex items-center gap-1.5 shadow transition">
+          <span id="mp-status-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span id="mp-btn-label">Invite</span>
+        </button>
+
+        <button id="btn-sound" onclick="toggleSound()" title="Toggle Crystal Audio & Haptics"
+          class="p-2 rounded-xl bg-purple-950/70 hover:bg-purple-900/80 border border-purple-400/25 text-purple-200 transition">
+          <svg id="icon-sound-on" class="w-4 h-4 text-amber-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 010 7.07M19.07 4.93a10 10 0 010 14.14" />
+          </svg>
+          <svg id="icon-sound-off" class="w-4 h-4 text-purple-400 hidden" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5L6 9H2v6h4l5 4V5zM23 9l-6 6M17 9l6 6" />
+          </svg>
+        </button>
+
+        <button onclick="openKeepsakeModal()" title="View Drawn Tarot Cards & Answers"
+          class="relative p-2 rounded-xl bg-purple-950/70 hover:bg-purple-900/80 border border-purple-400/25 text-purple-200 transition">
+          <svg class="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span id="badge-cards-count" class="hidden absolute -top-1 -right-1 w-4 h-4 rounded-full bg-amber-400 text-slate-950 text-xs font-bold flex items-center justify-center">0</span>
+        </button>
+
+        <button onclick="openSettingsModal()" title="Customize Players & Tarot Deck"
+          class="p-2 rounded-xl bg-purple-950/70 hover:bg-purple-900/80 border border-purple-400/25 text-purple-200 transition">
+          <svg class="w-4 h-4 text-purple-200" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Active Live Room Banner -->
+    <div id="live-room-banner" class="hidden velvet-card gold-border-glow rounded-2xl px-3.5 py-2 items-center justify-between gap-2 text-xs">
+      <div class="flex items-center gap-2 min-w-0">
+        <span id="banner-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0"></span>
+        <div class="truncate">
+          <span class="font-semibold text-amber-200" id="banner-room-title">Room: ----</span>
+          <span class="text-purple-200/80 ml-1" id="banner-role-subtitle">(You are Gold)</span>
+        </div>
+      </div>
+      <div class="flex items-center gap-1.5 shrink-0">
+        <button onclick="copyInviteLink()" id="btn-banner-copy"
+          class="px-2.5 py-1 rounded-lg bg-amber-400/20 hover:bg-amber-400/30 border border-amber-300/50 text-amber-200 font-semibold transition">
+          Copy Link
+        </button>
+      </div>
+    </div>
+
+    <!-- Player Scoreboard & 3-Round Bunch Progress (Tap Either Card to Edit Name!) -->
+    <section class="grid grid-cols-11 gap-2 items-center">
+      <!-- Player 1 Card (Amethyst) -->
+      <div id="p1-card" onclick="openSetupNames(1)" title="Tap to edit Player 1 name"
+        class="col-span-4 velvet-card rounded-2xl p-2.5 border transition-all duration-300 relative overflow-hidden cursor-pointer hover:border-purple-300/70 group">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full token-amethyst shrink-0 flex items-center justify-center">
+            <div class="w-2.5 h-2.5 rounded-full border border-white/50"></div>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1">
+              <p id="p1-name-display" class="text-xs font-semibold text-purple-100 truncate">Player 1</p>
+              <span class="text-xs text-purple-300/60 group-hover:text-amber-300 transition">✎</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span id="p1-order-badge" class="text-xs px-1 rounded bg-purple-900/90 text-purple-200 font-medium">1st</span>
+              <p id="p1-turn-tag" class="text-xs text-purple-300/80 truncate">Your Drop</p>
+            </div>
+          </div>
+          <span id="p1-score" class="font-serif-luxury text-xl font-bold text-purple-200">0</span>
+        </div>
+      </div>
+
+      <!-- Center 3-Round Bunch Gems -->
+      <div class="col-span-3 velvet-card rounded-2xl py-2 px-2 flex flex-col items-center justify-center border border-amber-400/20">
+        <span class="text-xs uppercase tracking-widest text-amber-200/80 font-medium mb-1">3-Round Set</span>
+        <div class="flex items-center gap-2" id="round-gems"></div>
+      </div>
+
+      <!-- Player 2 Card (Gold) -->
+      <div id="p2-card" onclick="openSetupNames(2)" title="Tap to edit Player 2 name"
+        class="col-span-4 velvet-card rounded-2xl p-2.5 border transition-all duration-300 relative overflow-hidden cursor-pointer hover:border-amber-300/70 group">
+        <div class="flex items-center gap-2">
+          <div class="w-6 h-6 rounded-full token-gold shrink-0 flex items-center justify-center">
+            <div class="w-2.5 h-2.5 rounded-full border border-white/60"></div>
+          </div>
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-1">
+              <p id="p2-name-display" class="text-xs font-semibold text-amber-100 truncate">Player 2</p>
+              <span class="text-xs text-amber-300/60 group-hover:text-amber-200 transition">✎</span>
+            </div>
+            <div class="flex items-center gap-1">
+              <span id="p2-order-badge" class="text-xs px-1 rounded bg-amber-950/90 text-amber-200 font-medium">2nd</span>
+              <p id="p2-turn-tag" class="text-xs text-amber-200/60 truncate">Waiting</p>
+            </div>
+          </div>
+          <span id="p2-score" class="font-serif-luxury text-xl font-bold text-amber-300">0</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Connect Four Board -->
+    <main class="relative flex flex-col items-center">
+      <div id="preview-row" class="grid grid-cols-7 gap-1.5 sm:gap-2.5 w-full px-3 sm:px-4 h-7 mb-1 items-center justify-items-center"></div>
+
+      <div id="board-frame" class="board-container w-full rounded-3xl p-3 sm:p-4 relative">
+        <svg id="win-line-svg" class="absolute inset-0 w-full h-full pointer-events-none z-30" preserveAspectRatio="none"></svg>
+        <div id="board-grid" class="grid grid-cols-7 gap-1.5 sm:gap-2.5 w-full aspect-[7/6]"></div>
+      </div>
+
+      <div class="w-full flex items-center justify-between mt-2 px-1 text-xs text-purple-300/75">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+          <span id="status-message" class="truncate">Tap any column to drop an Amethyst stone</span>
+        </div>
+        <div class="flex items-center gap-2.5 shrink-0 ml-2">
+          <button onclick="swapStartingPlayer()" id="btn-swap-starter" title="Switch who plays 1st this round"
+            class="text-amber-300/90 hover:text-amber-200 transition">
+            ⇄ Switch 1st
+          </button>
+          <button onclick="openSetupNames(1)" class="text-purple-300 hover:text-amber-300 underline underline-offset-4 transition">
+            Edit Names
+          </button>
+          <button onclick="confirmResetBoard()" class="text-purple-300/70 hover:text-purple-100 transition">
+            Reset
+          </button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 1: WINNER'S TAROT / INTENTION CARD                              -->
+  <!-- ===================================================================== -->
+  <div id="tarot-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div class="w-full max-w-md my-auto flex flex-col items-center text-center">
+      <div class="mb-3">
+        <span id="tarot-round-pill" class="inline-block text-xs uppercase tracking-widest px-3 py-1 rounded-full bg-purple-950/90 border border-amber-400/40 text-amber-300 font-semibold mb-1.5">
+          Round I Complete
+        </span>
+        <h2 id="tarot-winner-title" class="font-serif-luxury text-2xl sm:text-3xl font-bold text-white">
+          Amethyst Claims the Round
+        </h2>
+        <p id="tarot-instruction-sub" class="text-xs sm:text-sm text-purple-200/85 mt-0.5">
+          Winner: Choose 1 of the 3 veiled Intention Cards to flip for the loser.
+        </p>
+      </div>
+
+      <!-- 3-Card Spread Picker -->
+      <div id="tarot-spread-picker" class="w-full grid grid-cols-3 gap-3 my-3 px-1"></div>
+
+      <!-- Focused 3D Flipping Card + Answer Area -->
+      <div id="tarot-focused-stage" class="w-full hidden flex-col items-center">
+        <div class="perspective-stage w-full max-w-[310px] h-[320px] sm:h-[345px] mx-auto mb-3">
+          <div id="tarot-3d-card" class="tarot-card-3d w-full h-full">
+            <div class="tarot-face tarot-face-back p-5 flex flex-col items-center justify-between">
+              <div class="w-full flex justify-between text-amber-300/70 text-xs">
+                <span>✦</span><span>✦</span>
+              </div>
+              <div class="flex flex-col items-center justify-center my-auto">
+                <div class="w-24 h-24 rounded-full border border-amber-400/50 flex items-center justify-center relative">
+                  <div class="w-16 h-16 rotate-45 border border-purple-300/50 flex items-center justify-center">
+                    <span class="font-serif-luxury text-2xl text-amber-300 -rotate-45">IV</span>
+                  </div>
+                </div>
+                <p class="font-serif-luxury text-sm tracking-widest uppercase text-amber-200/90 mt-4">
+                  Winner's Intention
+                </p>
+              </div>
+              <div class="w-full flex justify-between text-amber-300/70 text-xs">
+                <span>✦</span><span>✦</span>
+              </div>
+            </div>
+
+            <div class="tarot-face tarot-face-front p-5 flex flex-col justify-between text-center relative overflow-hidden">
+              <div class="flex items-center justify-between w-full border-b border-amber-300/20 pb-2">
+                <span id="card-numeral" class="font-serif-luxury text-xs font-bold tracking-widest text-amber-300 uppercase">
+                  ARCANA IV
+                </span>
+                <span id="card-vibe-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-purple-900/90 border border-amber-300/40 text-amber-200 font-medium">
+                  Slightly Spicy
+                </span>
+              </div>
+
+              <div class="my-auto py-2 px-1 flex flex-col items-center">
+                <div class="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500/30 to-amber-500/20 border border-amber-300/50 flex items-center justify-center mb-2 shadow-inner">
+                  <span id="card-symbol" class="text-lg text-amber-300">✦</span>
+                </div>
+                <h3 id="card-arcana-name" class="font-serif-luxury text-xl font-bold text-amber-200 mb-2">
+                  The Velvet Confession
+                </h3>
+                <p id="card-question-text" class="text-sm sm:text-base text-purple-50 leading-relaxed font-medium"></p>
+              </div>
+
+              <div class="border-t border-amber-300/20 pt-2 flex items-center justify-between text-xs text-purple-300/80">
+                <span id="card-forfeit-label">Loser's Forfeit</span>
+                <button id="btn-reroll-card" onclick="rerollTarotCard()" class="text-amber-300 hover:text-amber-200 flex items-center gap-1 underline underline-offset-2">
+                  <span>↻ Draw Different Card</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 1: Loser's Input Box -->
+        <div id="loser-input-panel" class="w-full velvet-card gold-border-glow rounded-2xl p-3.5 text-left">
+          <label for="loser-answer-input" id="loser-prompt-label" class="block text-xs font-semibold uppercase tracking-wider text-amber-300 mb-1.5">
+            Loser's Answer Required to Unlock Next Round:
+          </label>
+          <textarea
+            id="loser-answer-input"
+            rows="2"
+            placeholder="Type your honest answer here before the board resets..."
+            oninput="validateAnswerInput()"
+            class="w-full rounded-xl bg-black/50 border border-purple-400/35 focus:border-amber-400 focus:outline-none p-2.5 text-sm text-purple-50 placeholder-purple-400/50 resize-none"
+          ></textarea>
+          <div class="flex items-center justify-between mt-2.5 gap-2">
+            <span id="answer-hint" class="text-xs text-purple-300/70">
+              Must type an answer to seal the card
+            </span>
+            <button
+              id="btn-submit-answer"
+              onclick="submitTarotAnswer()"
+              disabled
+              class="btn-luxury px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white flex items-center gap-1.5"
+            >
+              <span id="btn-submit-text">Seal Answer & Next Round</span>
+              <span>→</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- VIEW 2: Winner's Live Waiting Box -->
+        <div id="winner-waiting-panel" class="hidden w-full velvet-card gold-border-glow rounded-2xl p-4 text-center">
+          <div class="flex items-center justify-center gap-2 text-amber-300 text-xs sm:text-sm font-semibold">
+            <span class="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
+            <span id="winner-waiting-status">Waiting for loser to type their confession...</span>
+          </div>
+          <p class="text-xs text-purple-300/75 mt-1">
+            Their answer will appear live on your screen the moment they seal it.
+          </p>
+        </div>
+
+        <!-- VIEW 3: Revealed Confession Panel -->
+        <div id="answer-revealed-panel" class="hidden w-full velvet-card gold-border-glow rounded-2xl p-4 text-left">
+          <div class="flex items-center justify-between mb-1">
+            <span id="revealed-author-label" class="text-xs font-bold uppercase tracking-wider text-amber-300">
+              ✦ Confession Sealed
+            </span>
+            <span class="text-xs text-purple-300/75">Saved to Keepsake</span>
+          </div>
+          <p id="revealed-answer-text" class="text-sm sm:text-base text-white bg-black/45 border border-purple-400/30 rounded-xl p-3 my-1.5 font-medium leading-relaxed"></p>
+          <div class="flex items-center justify-between mt-2.5">
+            <span id="next-starter-preview" class="text-xs text-purple-300/85">
+              Next round: switching 1st player!
+            </span>
+            <button onclick="proceedAfterAnswerReveal()" id="btn-proceed-next-round"
+              class="btn-luxury px-5 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white">
+              Start Next Round ✦
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 2: LIVE 2-PHONE MULTIPLAYER INVITE & ROOM SETUP                 -->
+  <!-- ===================================================================== -->
+  <div id="mp-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div class="velvet-card gold-border-glow w-full max-w-md rounded-3xl p-5 my-auto text-left relative">
+      <button onclick="closeMultiplayerModal()" class="absolute top-4 right-4 p-1.5 rounded-xl bg-purple-950/80 border border-purple-400/30 text-purple-200 hover:text-white">
+        ✕
+      </button>
+
+      <span class="inline-block text-xs uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-300/40 text-amber-200 font-semibold mb-1.5">
+        Play Together Remotely
+      </span>
+      <h3 class="font-serif-luxury text-2xl font-bold text-white">
+        Invite to Play Live
+      </h3>
+      <p class="text-xs text-purple-200/80 mt-0.5 mb-3.5">
+        Set player names below, then copy the invite link and send it in iMessage. First-player turn switches automatically every round!
+      </p>
+
+      <!-- Custom Names Right Inside the Invite Modal! -->
+      <div class="grid grid-cols-2 gap-2.5 mb-3.5">
+        <div>
+          <label class="block text-xs text-purple-200 mb-1 font-semibold">Player 1 (Amethyst)</label>
+          <input id="mp-input-p1-name" type="text" maxlength="18" placeholder="Player 1 Name"
+            oninput="syncNamesFromInviteModal()"
+            class="w-full rounded-xl bg-black/60 border border-purple-400/45 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs text-amber-200 mb-1 font-semibold">Player 2 (Gold)</label>
+          <input id="mp-input-p2-name" type="text" maxlength="18" placeholder="Player 2 Name"
+            oninput="syncNamesFromInviteModal()"
+            class="w-full rounded-xl bg-black/60 border border-amber-400/45 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none" />
+        </div>
+      </div>
+
+      <!-- Room Code & Connection Pill -->
+      <div class="p-3 rounded-2xl bg-black/55 border border-amber-400/35 mb-3.5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs text-purple-300 uppercase tracking-wider font-semibold">Private Room Code</span>
+          <span id="mp-modal-conn-pill" class="text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 font-medium">
+            ● Ready to Connect
+          </span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <input id="input-room-code" type="text" maxlength="16"
+            class="flex-1 rounded-xl bg-purple-950/70 border border-purple-400/40 px-3 py-1.5 font-mono text-sm font-bold text-amber-200 uppercase tracking-widest focus:border-amber-400 focus:outline-none" />
+          <button onclick="joinCustomRoomCode()"
+            class="px-3 py-1.5 rounded-xl bg-purple-900/80 hover:bg-purple-800 border border-purple-400/35 text-xs font-semibold text-purple-100 transition">
+            Set Room
+          </button>
+          <button onclick="generateNewRoom()" title="Generate New Room"
+            class="p-1.5 rounded-xl bg-purple-950/80 hover:bg-purple-900 border border-purple-400/30 text-amber-300 transition">
+            ↻
+          </button>
+        </div>
+      </div>
+
+      <!-- Choose Which Piece You Play On This Phone -->
+      <div class="mb-3.5">
+        <label class="block text-xs text-purple-300 mb-1.5 font-medium">
+          Your Piece on This Device (Invite Link Assigns the Other):
+        </label>
+        <div class="grid grid-cols-2 gap-2.5">
+          <button type="button" id="role-btn-2" onclick="selectLocalRole(2)"
+            class="p-2 rounded-2xl border text-left transition flex items-center gap-2.5">
+            <div class="w-5 h-5 rounded-full token-gold shrink-0"></div>
+            <div>
+              <div class="text-xs font-bold text-amber-200">You = Gold</div>
+              <div class="text-xs text-purple-300/75">Partner gets Amethyst</div>
+            </div>
+          </button>
+
+          <button type="button" id="role-btn-1" onclick="selectLocalRole(1)"
+            class="p-2 rounded-2xl border text-left transition flex items-center gap-2.5">
+            <div class="w-5 h-5 rounded-full token-amethyst shrink-0"></div>
+            <div>
+              <div class="text-xs font-bold text-purple-200">You = Amethyst</div>
+              <div class="text-xs text-purple-300/75">Partner gets Gold</div>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Shareable Invite Link Box -->
+      <div class="p-3.5 rounded-2xl bg-purple-950/60 border border-purple-400/30 mb-3.5">
+        <label class="block text-xs font-semibold text-amber-200 mb-1">
+          Direct Invite Link (Joins as <span id="partner-color-name">Amethyst</span>):
+        </label>
+        <input id="input-invite-url" type="text" readonly onclick="this.select()"
+          class="w-full rounded-xl bg-black/60 border border-purple-500/30 px-3 py-2 text-xs text-purple-200 font-mono mb-2.5 focus:outline-none" />
+
+        <div class="flex items-center gap-2">
+          <button onclick="copyInviteLink()" id="btn-copy-invite"
+            class="btn-luxury flex-1 py-2.5 px-4 rounded-xl text-xs sm:text-sm font-semibold text-white flex items-center justify-center gap-1.5">
+            <span>✦ Copy Invite Link</span>
+          </button>
+          <button onclick="nativeShareInviteLink()" id="btn-native-share"
+            class="px-3.5 py-2.5 rounded-xl bg-purple-900/90 hover:bg-purple-800 border border-amber-300/40 text-xs font-semibold text-amber-200 transition">
+            Share…
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-between pt-2 border-t border-purple-500/20 text-xs">
+        <button onclick="disableMultiplayerMode()" class="text-purple-400 hover:text-purple-200 underline">
+          Switch to Single-Phone Pass & Play
+        </button>
+        <button onclick="closeMultiplayerModal()" class="px-4 py-1.5 rounded-xl bg-purple-900/80 text-purple-100 hover:bg-purple-800 font-medium">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 3: END OF BUNCH OF 3 — 3-CARD KEEPSAKE SPREAD                   -->
+  <!-- ===================================================================== -->
+  <div id="keepsake-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
+    <div class="velvet-card gold-border-glow w-full max-w-lg rounded-3xl p-5 sm:p-6 my-auto text-center relative">
+      <button onclick="closeKeepsakeModal()" class="absolute top-4 right-4 p-1.5 rounded-xl bg-purple-950/80 border border-purple-400/30 text-purple-200 hover:text-white">
+        ✕
+      </button>
+
+      <span class="inline-block text-xs uppercase tracking-widest px-3 py-1 rounded-full bg-amber-500/20 border border-amber-300/50 text-amber-200 font-semibold mb-2">
+        Bunch of 3 · Trilogy Reading
+      </span>
+      <h2 id="keepsake-title" class="font-serif-luxury text-2xl sm:text-3xl font-bold bg-gradient-to-r from-purple-200 via-amber-200 to-purple-200 bg-clip-text text-transparent">
+        Your 3-Card Intention Spread
+      </h2>
+      <p id="keepsake-subtitle" class="text-xs sm:text-sm text-purple-200/80 mt-1 mb-4">
+        Every round unlocked a card and sealed a confession.
+      </p>
+
+      <div id="keepsake-cards-list" class="space-y-3 text-left max-h-[52vh] overflow-y-auto pr-1"></div>
+
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-2 pt-3 border-t border-purple-500/25">
+        <button onclick="copyKeepsakeText()" id="btn-copy-reading"
+          class="px-3.5 py-2 rounded-xl bg-purple-950/90 hover:bg-purple-900 border border-amber-300/35 text-xs font-medium text-amber-200 transition">
+          ✦ Copy Keepsake Reading
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button onclick="closeKeepsakeModal()" id="btn-keep-playing"
+            class="px-3.5 py-2 rounded-xl bg-purple-950/70 hover:bg-purple-900 border border-purple-400/30 text-xs text-purple-200 transition">
+            Back to Board
+          </button>
+          <button onclick="startNewBunchOfThree(true)"
+            class="btn-luxury px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-white">
+            Start New Bunch of 3 ✦
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- MODAL 4: SETTINGS & CUSTOM TAROT PROMPT EDITOR                        -->
+  <!-- ===================================================================== -->
+  <div id="settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/80 backdrop-blur-md overflow-y-auto">
+    <div class="velvet-card gold-border-glow w-full max-w-md rounded-3xl p-5 my-auto text-left relative">
+      <div class="flex items-center justify-between border-b border-purple-500/25 pb-3 mb-4">
+        <div>
+          <h3 class="font-serif-luxury text-xl font-bold text-amber-200">Customize Names & Deck</h3>
+          <p class="text-xs text-purple-300/75">Tailor player names, first mover, and custom Tarot prompts</p>
+        </div>
+        <button onclick="closeSettingsModal()" class="p-1.5 rounded-xl bg-purple-950/80 border border-purple-400/30 text-purple-200 hover:text-white">
+          ✕
+        </button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="block text-xs text-purple-300 mb-1 font-medium">Player 1 (Royal Amethyst)</label>
+          <input id="input-p1-name" type="text" maxlength="18" placeholder="Player 1 Name"
+            class="w-full rounded-xl bg-black/50 border border-purple-400/40 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs text-amber-200 mb-1 font-medium">Player 2 (Celestial Gold)</label>
+          <input id="input-p2-name" type="text" maxlength="18" placeholder="Player 2 Name"
+            class="w-full rounded-xl bg-black/50 border border-amber-400/40 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 mb-4">
+        <div>
+          <label class="block text-xs text-purple-300 mb-1 font-medium">Play Mode</label>
+          <select id="select-game-mode"
+            class="w-full rounded-xl bg-black/60 border border-purple-400/40 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none">
+            <option value="online">Live 2-Phone Multiplayer</option>
+            <option value="pvp">Pass & Play (1 Phone)</option>
+            <option value="ai">Solo vs. AI (Test Mode)</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs text-purple-300 mb-1 font-medium">Tarot Deck Vibe</label>
+          <select id="select-deck-vibe"
+            class="w-full rounded-xl bg-black/60 border border-purple-400/40 px-3 py-2 text-xs text-white focus:border-amber-400 focus:outline-none">
+            <option value="all">All (Playful + Deep + Spicy)</option>
+            <option value="playful">Playful & Flirty</option>
+            <option value="intentional">Deep & Intentional</option>
+            <option value="spicy">Slightly Spicy 🔥</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="p-3 rounded-2xl bg-purple-950/50 border border-amber-400/25 mb-4">
+        <label class="block text-xs font-semibold text-amber-300 mb-1">
+          + Add a Custom Tarot Question (Personal / Inside Joke)
+        </label>
+        <div class="flex gap-2">
+          <input id="input-custom-question" type="text" placeholder="e.g., What outfit of mine lives rent-free in your head?"
+            class="flex-1 rounded-xl bg-black/50 border border-purple-400/35 px-3 py-2 text-xs text-white placeholder-purple-400/50 focus:border-amber-400 focus:outline-none" />
+          <button onclick="addCustomTarotCard()"
+            class="px-3 py-2 rounded-xl bg-amber-500/25 hover:bg-amber-500/35 border border-amber-300/50 text-xs font-semibold text-amber-200 shrink-0 transition">
+            Add Card
+          </button>
+        </div>
+        <p id="custom-card-count" class="text-xs text-purple-300/75 mt-1.5"></p>
+      </div>
+
+      <div class="flex justify-end gap-2">
+        <button onclick="saveSettings()" class="btn-luxury px-5 py-2 rounded-xl text-xs font-semibold text-white">
+          Save & Apply
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /*************************************************************************
+     * 1. DEFAULT TAROT / INTENTION DECK
+     *************************************************************************/
+    const DEFAULT_TAROT_DECK = [
+      {
+        numeral: "ARCANA I",
+        title: "The First Glance",
+        vibe: "Playful",
+        vibeKey: "playful",
+        symbol: "☾",
+        question: "What was your very first unfiltered thought about me when we met—and were you right?"
+      },
+      {
+        numeral: "ARCANA II",
+        title: "The Subtle Tell",
+        vibe: "Playful",
+        vibeKey: "playful",
+        symbol: "✦",
+        question: "What is one tiny thing I do without realizing it that immediately folds you?"
+      },
+      {
+        numeral: "ARCANA III",
+        title: "The Stolen Alibi",
+        vibe: "Playful",
+        vibeKey: "playful",
+        symbol: "♛",
+        question: "If you had to kidnap me for 24 hours with zero responsibilities, where are we going and what's the vibe?"
+      },
+      {
+        numeral: "ARCANA IV",
+        title: "The Velvet Compliment",
+        vibe: "Playful",
+        vibeKey: "playful",
+        symbol: "❖",
+        question: "What is a compliment you've thought about giving me recently, but kept to yourself?"
+      },
+      {
+        numeral: "ARCANA V",
+        title: "The Golden Thread",
+        vibe: "Intention",
+        vibeKey: "intentional",
+        symbol: "☼",
+        question: "When do you feel the most magnetic and connected to me?"
+      },
+      {
+        numeral: "ARCANA VI",
+        title: "The Mirror of Desire",
+        vibe: "Intention",
+        vibeKey: "intentional",
+        symbol: "✧",
+        question: "What is one memory of the two of us that you replay in your head more than you admit?"
+      },
+      {
+        numeral: "ARCANA VII",
+        title: "The Unwritten Wish",
+        vibe: "Intention",
+        vibeKey: "intentional",
+        symbol: "❂",
+        question: "What is something you secretly hope happens between us next time we see each other?"
+      },
+      {
+        numeral: "ARCANA VIII",
+        title: "The Sanctuary",
+        vibe: "Intention",
+        vibeKey: "intentional",
+        symbol: "♡",
+        question: "What is one thing I do that makes you feel completely seen or desired?"
+      },
+      {
+        numeral: "ARCANA IX",
+        title: "The Amethyst Temptation",
+        vibe: "Slightly Spicy 🔥",
+        vibeKey: "spicy",
+        symbol: "🔥",
+        question: "What outfit, look, or moment of mine lives completely rent-free in your head?"
+      },
+      {
+        numeral: "ARCANA X",
+        title: "The Midnight Craving",
+        vibe: "Slightly Spicy 🔥",
+        vibeKey: "spicy",
+        symbol: "☾",
+        question: "Where is your favorite place for me to kiss or touch you when nobody else is watching?"
+      },
+      {
+        numeral: "ARCANA XI",
+        title: "The Sovereign's Claim",
+        vibe: "Slightly Spicy 🔥",
+        vibeKey: "spicy",
+        symbol: "⚡",
+        question: "If the winner of this 3-round set gets one uninterrupted wish next time we're together, what are you secretly hoping I ask for?"
+      },
+      {
+        numeral: "ARCANA XII",
+        title: "The Fever Dream",
+        vibe: "Slightly Spicy 🔥",
+        vibeKey: "spicy",
+        symbol: "✦",
+        question: "Describe in one sentence the exact moment you knew you wanted more than just polite conversation with me."
+      }
+    ];
+
+    /*************************************************************************
+     * 2. GAME & LIVE MULTIPLAYER STATE
+     *************************************************************************/
+    const ROWS = 6;
+    const COLS = 7;
+
+    let state = {
+      board: [],
+      startingPlayer: 1, // Strictly alternates 1 -> 2 -> 1 -> 2 every single game!
+      currentPlayer: 1,
+      movesThisRound: 0,
+      isAnimating: false,
+      roundOver: false,
+
+      p1Name: "Player 1",
+      p2Name: "Player 2",
+      gameMode: "pvp", // 'pvp', 'online', 'ai'
+      deckVibe: "all",
+      soundEnabled: true,
+
+      // Bunch of 3
+      currentRound: 1,
+      maxRounds: 3,
+      p1Wins: 0,
+      p2Wins: 0,
+      roundResults: [null, null, null],
+      keepsakeHistory: [],
+
+      // Tarot Modal
+      activeRoundWinner: null,
+      activeRoundLoser: null,
+      spreadChoices: [],
+      selectedCard: null,
+      usedCardTitles: new Set(),
+      customCards: [],
+
+      // Live 2-Phone Multiplayer
+      clientId: "c_" + Math.random().toString(36).slice(2, 10),
+      roomCode: "",
+      myRole: 2, // Default host is Gold (2) so Her invite link is Amethyst (1)!
+      partnerConnected: false,
+      lastPartnerSeen: 0
+    };
+
+    /*************************************************************************
+     * 3. MULTI-TRANSPORT REAL-TIME SYNC ENGINE
+     *************************************************************************/
+    let ntfySocket = null;
+    let localEventSource = null;
+    let broadcastChan = null;
+    let seenMsgIds = new Set();
+    let lastTypingSent = 0;
+
+    function randomRoomCode() {
+      const words = ["AMETHYST", "VELVET", "GOLDEN", "ARCANA", "VIOLET", "MYSTIC"];
+      const w = words[Math.floor(Math.random() * words.length)];
+      const num = Math.floor(100 + Math.random() * 900);
+      return `${w}-${num}`;
+    }
+
+    function connectMultiplayerRoom(roomCode) {
+      if (!roomCode) return;
+      state.roomCode = roomCode.toUpperCase().replace(/[^A-Z0-9-]/g, "");
+      const topic = `amethyst-c4-v2-${state.roomCode.toLowerCase()}`;
+
+      if (ntfySocket) {
+        try { ntfySocket.close(); } catch (e) {}
+        ntfySocket = null;
+      }
+      if (localEventSource) {
+        try { localEventSource.close(); } catch (e) {}
+        localEventSource = null;
+      }
+      if (broadcastChan) {
+        try { broadcastChan.close(); } catch (e) {}
+        broadcastChan = null;
+      }
+
+      if ("BroadcastChannel" in window) {
+        broadcastChan = new BroadcastChannel(topic);
+        broadcastChan.onmessage = (ev) => handleIncomingEnvelope(ev.data);
+      }
+
+      try {
+        localEventSource = new EventSource(`/api/events?room=${encodeURIComponent(topic)}`);
+        localEventSource.onmessage = (ev) => {
+          try {
+            handleIncomingEnvelope(JSON.parse(ev.data));
+          } catch (e) {}
+        };
+      } catch (e) {}
+
+      try {
+        ntfySocket = new WebSocket(`wss://ntfy.sh/${topic}/ws`);
+        ntfySocket.onmessage = (ev) => {
+          try {
+            const wrapper = JSON.parse(ev.data);
+            if (wrapper.event === "message" && wrapper.message) {
+              const payload = JSON.parse(wrapper.message);
+              handleIncomingEnvelope(payload);
+            }
+          } catch (e) {}
+        };
+      } catch (e) {}
+
+      updateMultiplayerUI();
+
+      setTimeout(() => {
+        sendRealtimeEvent("HELLO_PRESENCE", {
+          role: state.myRole,
+          p1Name: state.p1Name,
+          p2Name: state.p2Name,
+          customCards: state.customCards
+        });
+      }, 350);
+    }
+
+    function sendRealtimeEvent(type, data = {}) {
+      if (state.gameMode !== "online" || !state.roomCode) return;
+
+      const topic = `amethyst-c4-v2-${state.roomCode.toLowerCase()}`;
+      const envelope = {
+        msgId: `${state.clientId}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+        senderId: state.clientId,
+        senderRole: state.myRole,
+        type,
+        data,
+        ts: Date.now()
+      };
+      seenMsgIds.add(envelope.msgId);
+
+      if (broadcastChan) {
+        try { broadcastChan.postMessage(envelope); } catch (e) {}
+      }
+
+      fetch(`/api/send?room=${encodeURIComponent(topic)}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(envelope)
+      }).catch(() => {});
+
+      fetch(`https://ntfy.sh/${topic}`, {
+        method: "POST",
+        body: JSON.stringify(envelope)
+      }).catch(() => {});
+    }
+
+    function handleIncomingEnvelope(envelope) {
+      if (!envelope || !envelope.msgId || seenMsgIds.has(envelope.msgId)) return;
+      if (envelope.senderId === state.clientId) return;
+      seenMsgIds.add(envelope.msgId);
+
+      state.partnerConnected = true;
+      state.lastPartnerSeen = Date.now();
+      updateMultiplayerUI();
+
+      const { type, data } = envelope;
+
+      switch (type) {
+        case "HELLO_PRESENCE": {
+          if (Array.isArray(data.customCards) && data.customCards.length > state.customCards.length) {
+            state.customCards = data.customCards;
+          }
+          sendRealtimeEvent("WELCOME_SYNC", {
+            p1Name: state.p1Name,
+            p2Name: state.p2Name,
+            customCards: state.customCards,
+            deckVibe: state.deckVibe,
+            currentRound: state.currentRound,
+            startingPlayer: state.startingPlayer,
+            currentPlayer: state.currentPlayer,
+            p1Wins: state.p1Wins,
+            p2Wins: state.p2Wins,
+            roundResults: state.roundResults,
+            keepsakeHistory: state.keepsakeHistory
+          });
+          spawnBurst(window.innerWidth / 2, 60, "gold", 18);
+          updateHeaderUI();
+          break;
+        }
+
+        case "WELCOME_SYNC": {
+          if (data.p1Name) state.p1Name = data.p1Name;
+          if (data.p2Name) state.p2Name = data.p2Name;
+          if (Array.isArray(data.customCards) && data.customCards.length > state.customCards.length) {
+            state.customCards = data.customCards;
+          }
+          if (data.deckVibe) state.deckVibe = data.deckVibe;
+          if (data.startingPlayer && state.movesThisRound === 0) {
+            state.startingPlayer = data.startingPlayer;
+            state.currentPlayer = data.currentPlayer || data.startingPlayer;
+          }
+          updateHeaderUI();
+          break;
+        }
+
+        case "SWAP_STARTER": {
+          if (state.movesThisRound === 0 && !state.roundOver) {
+            state.startingPlayer = data.startingPlayer;
+            state.currentPlayer = data.startingPlayer;
+            updateHeaderUI();
+          }
+          break;
+        }
+
+        case "DROP_PIECE": {
+          if (!state.roundOver) {
+            state.currentPlayer = data.player;
+            dropPieceInColumn(data.col, true);
+          }
+          break;
+        }
+
+        case "ROUND_WIN_SPREAD": {
+          state.spreadChoices = data.spreadChoices;
+          if (!document.getElementById("tarot-modal").classList.contains("hidden")) {
+            renderSpreadCardsInModal();
+          }
+          break;
+        }
+
+        case "TAROT_CARD_REVEALED": {
+          revealTarotCard(data.card, true);
+          break;
+        }
+
+        case "LOSER_TYPING": {
+          const waitStatus = document.getElementById("winner-waiting-status");
+          const loserName = state.activeRoundLoser === 1 ? state.p1Name : state.p2Name;
+          if (waitStatus) {
+            waitStatus.textContent =
+              data.hasText
+                ? `✦ ${loserName} is typing their answer...`
+                : `Waiting for ${loserName} to type their confession...`;
+          }
+          break;
+        }
+
+        case "TAROT_ANSWER_SUBMITTED": {
+          applySubmittedTarotAnswer(data.round, data.winnerName, data.loserName, data.card, data.answer, true);
+          break;
+        }
+
+        case "PROCEED_NEXT_ROUND": {
+          proceedAfterAnswerReveal(true);
+          break;
+        }
+
+        case "NEW_BUNCH_OF_THREE": {
+          startNewBunchOfThree(false);
+          break;
+        }
+
+        case "RESET_ROUND": {
+          initBoard();
+          break;
+        }
+
+        case "SETTINGS_UPDATED": {
+          if (data.p1Name) state.p1Name = data.p1Name;
+          if (data.p2Name) state.p2Name = data.p2Name;
+          if (data.deckVibe) state.deckVibe = data.deckVibe;
+          if (Array.isArray(data.customCards)) state.customCards = data.customCards;
+          savePreferencesToStorage();
+          updateHeaderUI();
+          updateInviteUrlInput();
+          break;
+        }
+      }
+    }
+
+    /*************************************************************************
+     * 4. WEB AUDIO SYNTHESIZER & HAPTICS
+     *************************************************************************/
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        if (AudioContext) audioCtx = new AudioContext();
+      }
+      if (audioCtx && audioCtx.state === "suspended") {
+        audioCtx.resume();
+      }
+      return audioCtx;
+    }
+
+    function triggerHaptic(pattern = [14]) {
+      if (navigator.vibrate) {
+        try { navigator.vibrate(pattern); } catch (e) {}
+      }
+    }
+
+    function playCrystalDropSound(row, player) {
+      if (!state.soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const now = ctx.currentTime;
+      const baseFreq = player === 1 ? 392 : 440;
+      const pitchShift = (ROWS - row) * 28;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "triangle";
+      osc.frequency.setValueAtTime(baseFreq + pitchShift, now);
+      osc.frequency.exponentialRampToValueAtTime((baseFreq + pitchShift) * 1.45, now + 0.09);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.17);
+    }
+
+    function playWinChord() {
+      if (!state.soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const notes = [523.25, 659.25, 783.99, 1046.5];
+      notes.forEach((freq, idx) => {
+        const now = ctx.currentTime + idx * 0.07;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.14, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.65);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.66);
+      });
+    }
+
+    function playTarotFlipShimmer() {
+      if (!state.soundEnabled) return;
+      const ctx = getAudioCtx();
+      if (!ctx) return;
+      const notes = [440, 554.37, 659.25, 880, 1108.73];
+      notes.forEach((freq, idx) => {
+        const now = ctx.currentTime + idx * 0.055;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now);
+        gain.gain.setValueAtTime(0.11, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.52);
+      });
+    }
+
+    function toggleSound() {
+      state.soundEnabled = !state.soundEnabled;
+      document.getElementById("icon-sound-on").classList.toggle("hidden", !state.soundEnabled);
+      document.getElementById("icon-sound-off").classList.toggle("hidden", state.soundEnabled);
+      if (state.soundEnabled) playCrystalDropSound(3, 1);
+    }
+
+    /*************************************************************************
+     * 5. PARTICLE & STARDUST CANVAS ENGINE
+     *************************************************************************/
+    const canvas = document.getElementById("fx-canvas");
+    const ctx = canvas.getContext("2d");
+    let particles = [];
+    let ambientStars = [];
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    window.addEventListener("resize", resizeCanvas);
+    resizeCanvas();
+
+    for (let i = 0; i < 38; i++) {
+      ambientStars.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 1.8 + 0.5,
+        alpha: Math.random() * 0.55 + 0.15,
+        vy: -(Math.random() * 0.25 + 0.06),
+        gold: Math.random() > 0.45
+      });
+    }
+
+    function spawnBurst(x, y, colorType = "amethyst", count = 22) {
+      const palette =
+        colorType === "amethyst"
+          ? ["#c084fc", "#a855f7", "#e9d5ff", "#fde047"]
+          : ["#fde047", "#f59e0b", "#fef08a", "#c084fc"];
+
+      for (let i = 0; i < count; i++) {
+        const angle = (Math.PI * 2 * i) / count + (Math.random() - 0.5) * 0.4;
+        const speed = Math.random() * 4.5 + 1.5;
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 1.2,
+          size: Math.random() * 3.5 + 1.5,
+          color: palette[Math.floor(Math.random() * palette.length)],
+          alpha: 1,
+          decay: Math.random() * 0.022 + 0.016
+        });
+      }
+    }
+
+    function renderCanvasLoop() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (const s of ambientStars) {
+        s.y += s.vy;
+        if (s.y < 0) {
+          s.y = canvas.height;
+          s.x = Math.random() * canvas.width;
+        }
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = s.gold
+          ? `rgba(253, 224, 71, ${s.alpha})`
+          : `rgba(192, 132, 252, ${s.alpha})`;
+        ctx.fill();
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vy += 0.09;
+        p.alpha -= p.decay;
+        if (p.alpha <= 0) {
+          particles.splice(i, 1);
+          continue;
+        }
+        ctx.save();
+        ctx.globalAlpha = Math.max(0, p.alpha);
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+      requestAnimationFrame(renderCanvasLoop);
+    }
+    requestAnimationFrame(renderCanvasLoop);
+
+    /*************************************************************************
+     * 6. BOARD INITIALIZATION & ALTERNATING FIRST PLAYER
+     *************************************************************************/
+    function initBoard() {
+      state.board = Array.from({ length: ROWS }, () => Array(COLS).fill(0));
+      state.roundOver = false;
+      state.isAnimating = false;
+      state.movesThisRound = 0;
+      document.getElementById("win-line-svg").innerHTML = "";
+
+      // Use the current round's designated startingPlayer (switches every round!)
+      state.currentPlayer = state.startingPlayer;
+
+      renderPreviewRow();
+      renderBoardGrid();
+      updateHeaderUI();
+
+      if (state.gameMode === "ai" && state.currentPlayer === 2) {
+        setTimeout(makeAIMove, 550);
+      }
+    }
+
+    function swapStartingPlayer() {
+      if (state.movesThisRound > 0 || state.roundOver || state.isAnimating) return;
+      state.startingPlayer = state.startingPlayer === 1 ? 2 : 1;
+      state.currentPlayer = state.startingPlayer;
+      triggerHaptic([15]);
+      updateHeaderUI();
+
+      if (state.gameMode === "online") {
+        sendRealtimeEvent("SWAP_STARTER", { startingPlayer: state.startingPlayer });
+      } else if (state.gameMode === "ai" && state.currentPlayer === 2) {
+        setTimeout(makeAIMove, 450);
+      }
+    }
+
+    function renderPreviewRow() {
+      const previewRow = document.getElementById("preview-row");
+      previewRow.innerHTML = "";
+      for (let c = 0; c < COLS; c++) {
+        const cell = document.createElement("div");
+        cell.id = `preview-col-${c}`;
+        cell.className = "w-6 h-6 rounded-full opacity-0 transition-all duration-200 pointer-events-none scale-75";
+        previewRow.appendChild(cell);
+      }
+    }
+
+    function isMyTurnInOnlineMode() {
+      if (state.gameMode !== "online") return true;
+      return state.currentPlayer === state.myRole;
+    }
+
+    function showColumnPreview(col, show, fromRemote = false) {
+      if (!fromRemote && state.gameMode === "online" && !isMyTurnInOnlineMode()) return;
+
+      for (let c = 0; c < COLS; c++) {
+        const el = document.getElementById(`preview-col-${c}`);
+        if (!el) continue;
+        if (c === col && show && !state.roundOver && !state.isAnimating) {
+          el.className = `w-6 h-6 rounded-full transition-all duration-150 opacity-85 scale-95 ${
+            state.currentPlayer === 1 ? "token-amethyst" : "token-gold"
+          }`;
+        } else {
+          el.className = "w-6 h-6 rounded-full opacity-0 transition-all duration-150 scale-75";
+        }
+      }
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const slotWrap = document.getElementById(`cell-wrap-${r}-${c}`);
+          if (slotWrap) {
+            slotWrap.classList.toggle("column-highlight", c === col && show && !state.roundOver);
+          }
+        }
+      }
+    }
+
+    function renderBoardGrid() {
+      const grid = document.getElementById("board-grid");
+      grid.innerHTML = "";
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          const cellWrap = document.createElement("button");
+          cellWrap.type = "button";
+          cellWrap.id = `cell-wrap-${r}-${c}`;
+          cellWrap.className = "relative w-full h-full flex items-center justify-center focus:outline-none group";
+          cellWrap.setAttribute("aria-label", `Column ${c + 1}, Row ${r + 1}`);
+          cellWrap.addEventListener("mouseenter", () => showColumnPreview(c, true));
+          cellWrap.addEventListener("mouseleave", () => showColumnPreview(c, false));
+          cellWrap.addEventListener("click", () => handleColumnClick(c));
+
+          const slot = document.createElement("div");
+          slot.id = `slot-${r}-${c}`;
+          slot.className = "board-slot w-full h-full rounded-full flex items-center justify-center p-0.5";
+
+          cellWrap.appendChild(slot);
+          grid.appendChild(cellWrap);
+        }
+      }
+    }
+
+    function updateHeaderUI() {
+      document.getElementById("p1-name-display").textContent = state.p1Name;
+      document.getElementById("p2-name-display").textContent = state.p2Name;
+
+      document.getElementById("p1-score").textContent = state.p1Wins;
+      document.getElementById("p2-score").textContent = state.p2Wins;
+
+      // Show 1st vs 2nd player badges for this round
+      const p1Order = document.getElementById("p1-order-badge");
+      const p2Order = document.getElementById("p2-order-badge");
+      if (state.startingPlayer === 1) {
+        p1Order.textContent = "1st";
+        p1Order.className = "text-xs px-1.5 rounded bg-amber-400/25 border border-amber-300/50 text-amber-200 font-semibold";
+        p2Order.textContent = "2nd";
+        p2Order.className = "text-xs px-1.5 rounded bg-purple-950/80 text-purple-300/70";
+      } else {
+        p2Order.textContent = "1st";
+        p2Order.className = "text-xs px-1.5 rounded bg-amber-400/25 border border-amber-300/50 text-amber-200 font-semibold";
+        p1Order.textContent = "2nd";
+        p1Order.className = "text-xs px-1.5 rounded bg-purple-950/80 text-purple-300/70";
+      }
+
+      // Show/hide "Switch 1st" button (only visible before the first piece of a round is dropped)
+      const swapBtn = document.getElementById("btn-swap-starter");
+      if (swapBtn) {
+        swapBtn.classList.toggle("hidden", state.movesThisRound > 0 || state.roundOver);
+      }
+
+      const p1Card = document.getElementById("p1-card");
+      const p2Card = document.getElementById("p2-card");
+      const p1Tag = document.getElementById("p1-turn-tag");
+      const p2Tag = document.getElementById("p2-turn-tag");
+
+      if (state.currentPlayer === 1) {
+        p1Card.className = "col-span-4 velvet-card rounded-2xl p-2.5 border border-purple-400/80 shadow-[0_0_22px_rgba(168,85,247,0.38)] transition-all duration-300 cursor-pointer group";
+        p2Card.className = "col-span-4 velvet-card rounded-2xl p-2.5 border border-purple-500/15 opacity-75 transition-all duration-300 cursor-pointer group";
+        p1Tag.textContent = state.gameMode === "online" && state.myRole === 1 ? "✦ Your Turn" : "✦ Turn";
+        p1Tag.className = "text-xs text-amber-300 font-medium truncate";
+        p2Tag.textContent = "Waiting";
+        p2Tag.className = "text-xs text-purple-300/50 truncate";
+
+        if (state.gameMode === "online") {
+          document.getElementById("status-message").textContent =
+            state.myRole === 1
+              ? `Your turn (${state.p1Name}) — tap any column!`
+              : `Waiting for ${state.p1Name} (Amethyst)...`;
+        } else {
+          document.getElementById("status-message").textContent =
+            `${state.p1Name}'s turn (${state.startingPlayer === 1 ? "1st Player" : "2nd Player"})`;
+        }
+      } else {
+        p2Card.className = "col-span-4 velvet-card rounded-2xl p-2.5 border border-amber-400/85 shadow-[0_0_22px_rgba(251,191,36,0.35)] transition-all duration-300 cursor-pointer group";
+        p1Card.className = "col-span-4 velvet-card rounded-2xl p-2.5 border border-purple-500/15 opacity-75 transition-all duration-300 cursor-pointer group";
+        p2Tag.textContent =
+          state.gameMode === "ai"
+            ? "✦ Thinking..."
+            : state.gameMode === "online" && state.myRole === 2
+            ? "✦ Your Turn"
+            : "✦ Turn";
+        p2Tag.className = "text-xs text-amber-300 font-medium truncate";
+        p1Tag.textContent = "Waiting";
+        p1Tag.className = "text-xs text-purple-300/50 truncate";
+
+        if (state.gameMode === "online") {
+          document.getElementById("status-message").textContent =
+            state.myRole === 2
+              ? `Your turn (${state.p2Name}) — tap any column!`
+              : `Waiting for ${state.p2Name} (Gold)...`;
+        } else {
+          document.getElementById("status-message").textContent =
+            `${state.p2Name}'s turn (${state.startingPlayer === 2 ? "1st Player" : "2nd Player"})`;
+        }
+      }
+
+      const starterName = state.startingPlayer === 1 ? state.p1Name : state.p2Name;
+      document.getElementById("trilogy-subtitle").textContent =
+        `Round ${state.currentRound} of ${state.maxRounds} · ${starterName} Plays 1st`;
+
+      const gemsContainer = document.getElementById("round-gems");
+      gemsContainer.innerHTML = "";
+      for (let i = 0; i < state.maxRounds; i++) {
+        const res = state.roundResults[i];
+        const gem = document.createElement("div");
+        const isCurrent = i + 1 === state.currentRound && !res;
+
+        if (res === 1) {
+          gem.className = "w-5 h-5 rounded-full token-amethyst flex items-center justify-center text-xs font-bold text-white shadow";
+          gem.innerHTML = "✦";
+        } else if (res === 2) {
+          gem.className = "w-5 h-5 rounded-full token-gold flex items-center justify-center text-xs font-bold text-slate-950 shadow";
+          gem.innerHTML = "✦";
+        } else if (res === "draw") {
+          gem.className = "w-5 h-5 rounded-full bg-purple-700 border border-amber-300/60 flex items-center justify-center text-xs text-white";
+          gem.innerHTML = "=";
+        } else if (isCurrent) {
+          gem.className = "w-5 h-5 rounded-full bg-purple-950 border-2 border-amber-300 animate-pulse flex items-center justify-center text-xs text-amber-200 font-semibold";
+          gem.textContent = i + 1;
+        } else {
+          gem.className = "w-5 h-5 rounded-full bg-purple-950/60 border border-purple-500/30 flex items-center justify-center text-xs text-purple-400/60";
+          gem.textContent = i + 1;
+        }
+        gemsContainer.appendChild(gem);
+      }
+
+      const badge = document.getElementById("badge-cards-count");
+      if (state.keepsakeHistory.length > 0) {
+        badge.textContent = state.keepsakeHistory.length;
+        badge.classList.remove("hidden");
+      } else {
+        badge.classList.add("hidden");
+      }
+
+      updateMultiplayerUI();
+    }
+
+    function updateMultiplayerUI() {
+      const banner = document.getElementById("live-room-banner");
+      const mpDot = document.getElementById("mp-status-dot");
+      const mpLabel = document.getElementById("mp-btn-label");
+      const connPill = document.getElementById("mp-modal-conn-pill");
+
+      if (state.gameMode === "online" && state.roomCode) {
+        banner.classList.remove("hidden");
+        banner.classList.add("flex");
+        document.getElementById("banner-room-title").textContent = `Room: ${state.roomCode}`;
+        document.getElementById("banner-role-subtitle").textContent =
+          state.myRole === 1 ? `· You are ${state.p1Name} (Amethyst)` : `· You are ${state.p2Name} (Gold)`;
+
+        if (state.partnerConnected) {
+          mpDot.className = "w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399]";
+          mpLabel.textContent = "Live (2/2)";
+          document.getElementById("banner-dot").className = "w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0";
+          if (connPill) {
+            connPill.textContent = "● Partner Connected Live";
+            connPill.className = "text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 border border-emerald-400/50 text-emerald-200 font-medium";
+          }
+        } else {
+          mpDot.className = "w-2 h-2 rounded-full bg-amber-400 animate-ping";
+          mpLabel.textContent = "Waiting (1/2)";
+          document.getElementById("banner-dot").className = "w-2.5 h-2.5 rounded-full bg-amber-400 animate-ping shrink-0";
+          if (connPill) {
+            connPill.textContent = "● Waiting for Partner...";
+            connPill.className = "text-xs px-2.5 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-200 font-medium";
+          }
+        }
+      } else {
+        banner.classList.add("hidden");
+        banner.classList.remove("flex");
+        mpDot.className = "w-2 h-2 rounded-full bg-amber-400";
+        mpLabel.textContent = "Invite";
+      }
+    }
+
+    /*************************************************************************
+     * 7. GAMEPLAY & SYNCHRONIZED PIECE DROPS
+     *************************************************************************/
+    function handleColumnClick(col) {
+      if (state.roundOver || state.isAnimating) return;
+      if (state.gameMode === "ai" && state.currentPlayer === 2) return;
+      if (state.gameMode === "online" && !isMyTurnInOnlineMode()) {
+        triggerHaptic([25]);
+        return;
+      }
+
+      dropPieceInColumn(col, false);
+    }
+
+    function getLowestEmptyRow(col) {
+      for (let r = ROWS - 1; r >= 0; r--) {
+        if (state.board[r][col] === 0) return r;
+      }
+      return -1;
+    }
+
+    function dropPieceInColumn(col, fromRemote = false) {
+      const targetRow = getLowestEmptyRow(col);
+      if (targetRow === -1) {
+        triggerHaptic([30]);
+        return;
+      }
+
+      const player = state.currentPlayer;
+      if (!fromRemote && state.gameMode === "online") {
+        sendRealtimeEvent("DROP_PIECE", { col, row: targetRow, player });
+      }
+
+      state.isAnimating = true;
+      state.movesThisRound++;
+      state.board[targetRow][col] = player;
+      showColumnPreview(col, false, true);
+
+      const slot = document.getElementById(`slot-${targetRow}-${col}`);
+      const token = document.createElement("div");
+
+      const dropDistancePx = (targetRow + 1.2) * 54;
+      const durationSec = (0.28 + targetRow * 0.045).toFixed(2);
+
+      token.id = `token-${targetRow}-${col}`;
+      token.style.setProperty("--drop-start", `-${dropDistancePx}px`);
+      token.style.setProperty("--drop-duration", `${durationSec}s`);
+      token.className = `w-full h-full rounded-full animate-drop flex items-center justify-center relative ${
+        player === 1 ? "token-amethyst" : "token-gold"
+      }`;
+
+      token.innerHTML =
+        player === 1
+          ? `<svg class="w-4 h-4 text-purple-100/75" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><polygon points="12 2 22 12 12 22 2 12"/></svg>`
+          : `<svg class="w-4 h-4 text-amber-950/65" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l2.5 6.5L21 12l-6.5 2.5L12 21l-2.5-6.5L3 12l6.5-2.5L12 3z"/></svg>`;
+
+      slot.appendChild(token);
+
+      const impactDelayMs = parseFloat(durationSec) * 620;
+      setTimeout(() => {
+        playCrystalDropSound(targetRow, player);
+        triggerHaptic([16]);
+
+        const boardFrame = document.getElementById("board-frame");
+        boardFrame.classList.remove("haptic-pop");
+        void boardFrame.offsetWidth;
+        boardFrame.classList.add("haptic-pop");
+
+        const ripple = document.createElement("div");
+        ripple.className = "ripple-ring";
+        ripple.style.border =
+          player === 1
+            ? "2px solid rgba(192, 132, 252, 0.85)"
+            : "2px solid rgba(253, 224, 71, 0.9)";
+        slot.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 550);
+
+        const rect = slot.getBoundingClientRect();
+        spawnBurst(
+          rect.left + rect.width / 2,
+          rect.top + rect.height / 2,
+          player === 1 ? "amethyst" : "gold",
+          14
+        );
+      }, impactDelayMs);
+
+      const totalDelayMs = parseFloat(durationSec) * 1000 + 40;
+      setTimeout(() => {
+        const winInfo = checkWin(player);
+        if (winInfo) {
+          handleRoundWin(player, winInfo);
+          return;
+        }
+
+        if (isBoardFull()) {
+          handleRoundDraw();
+          return;
+        }
+
+        state.currentPlayer = player === 1 ? 2 : 1;
+        state.isAnimating = false;
+        updateHeaderUI();
+
+        if (state.gameMode === "ai" && state.currentPlayer === 2 && !state.roundOver) {
+          setTimeout(makeAIMove, 460);
+        }
+      }, totalDelayMs);
+    }
+
+    function checkWin(player) {
+      const directions = [
+        [0, 1],
+        [1, 0],
+        [1, 1],
+        [1, -1]
+      ];
+
+      for (let r = 0; r < ROWS; r++) {
+        for (let c = 0; c < COLS; c++) {
+          if (state.board[r][c] !== player) continue;
+
+          for (const [dr, dc] of directions) {
+            const cells = [[r, c]];
+            for (let step = 1; step < 4; step++) {
+              const nr = r + dr * step;
+              const nc = c + dc * step;
+              if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && state.board[nr][nc] === player) {
+                cells.push([nr, nc]);
+              } else {
+                break;
+              }
+            }
+            if (cells.length >= 4) {
+              return cells;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function isBoardFull() {
+      return state.board[0].every((cell) => cell !== 0);
+    }
+
+    function handleRoundWin(winner, winningCells) {
+      state.roundOver = true;
+      state.isAnimating = false;
+
+      if (winner === 1) state.p1Wins++;
+      else state.p2Wins++;
+
+      state.roundResults[state.currentRound - 1] = winner;
+      updateHeaderUI();
+
+      playWinChord();
+      triggerHaptic([30, 50, 45]);
+
+      winningCells.forEach(([r, c]) => {
+        const token = document.getElementById(`token-${r}-${c}`);
+        if (token) token.classList.add("winning-token");
+        const slot = document.getElementById(`slot-${r}-${c}`);
+        if (slot) {
+          const rect = slot.getBoundingClientRect();
+          spawnBurst(
+            rect.left + rect.width / 2,
+            rect.top + rect.height / 2,
+            winner === 1 ? "amethyst" : "gold",
+            24
+          );
+        }
+      });
+
+      drawWinningConstellationLine(winningCells, winner);
+
+      const winnerName = winner === 1 ? state.p1Name : state.p2Name;
+      document.getElementById("status-message").textContent =
+        `✦ ${winnerName} connects four! Summoning the Winner's Tarot...`;
+
+      if (state.gameMode !== "online" || state.myRole === winner) {
+        state.spreadChoices = pickThreeSpreadCards();
+        if (state.gameMode === "online") {
+          sendRealtimeEvent("ROUND_WIN_SPREAD", {
+            winner,
+            spreadChoices: state.spreadChoices
+          });
+        }
+      } else if (state.spreadChoices.length === 0) {
+        state.spreadChoices = pickThreeSpreadCards();
+      }
+
+      setTimeout(() => {
+        openTarotModal(winner);
+      }, 1350);
+    }
+
+    function drawWinningConstellationLine(cells, winner) {
+      const svg = document.getElementById("win-line-svg");
+      const boardRect = document.getElementById("board-frame").getBoundingClientRect();
+      const firstSlot = document.getElementById(`slot-${cells[0][0]}-${cells[0][1]}`).getBoundingClientRect();
+      const lastSlot = document.getElementById(`slot-${cells[cells.length - 1][0]}-${cells[cells.length - 1][1]}`).getBoundingClientRect();
+
+      const x1 = firstSlot.left + firstSlot.width / 2 - boardRect.left;
+      const y1 = firstSlot.top + firstSlot.height / 2 - boardRect.top;
+      const x2 = lastSlot.left + lastSlot.width / 2 - boardRect.left;
+      const y2 = lastSlot.top + lastSlot.height / 2 - boardRect.top;
+
+      const strokeColor = winner === 1 ? "#e9d5ff" : "#fef08a";
+      const glowColor = winner === 1 ? "#a855f7" : "#f59e0b";
+
+      svg.innerHTML = `
+        <defs>
+          <filter id="winGlow" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="5" result="blur" />
+            <feMerge>
+              <feMergeNode in="blur" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+        </defs>
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+          stroke="${glowColor}" stroke-width="10" stroke-linecap="round" opacity="0.55" filter="url(#winGlow)" />
+        <line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"
+          stroke="${strokeColor}" stroke-width="4" stroke-linecap="round" />
+      `;
+    }
+
+    function handleRoundDraw() {
+      state.roundOver = true;
+      state.isAnimating = false;
+      state.roundResults[state.currentRound - 1] = "draw";
+      updateHeaderUI();
+      document.getElementById("status-message").textContent =
+        "Stalemate! Even a draw demands a Tarot Intention Card...";
+      state.spreadChoices = pickThreeSpreadCards();
+      setTimeout(() => {
+        openTarotModal(1, true);
+      }, 1100);
+    }
+
+    function makeAIMove() {
+      if (state.roundOver) return;
+      const validCols = [];
+      for (let c = 0; c < COLS; c++) {
+        if (getLowestEmptyRow(c) !== -1) validCols.push(c);
+      }
+      if (validCols.length === 0) return;
+
+      for (const c of validCols) {
+        const r = getLowestEmptyRow(c);
+        state.board[r][c] = 2;
+        if (checkWin(2)) {
+          state.board[r][c] = 0;
+          dropPieceInColumn(c);
+          return;
+        }
+        state.board[r][c] = 0;
+      }
+
+      for (const c of validCols) {
+        const r = getLowestEmptyRow(c);
+        state.board[r][c] = 1;
+        if (checkWin(1)) {
+          state.board[r][c] = 0;
+          dropPieceInColumn(c);
+          return;
+        }
+        state.board[r][c] = 0;
+      }
+
+      const weights = validCols.map((c) => ({
+        col: c,
+        score: 4 - Math.abs(3 - c) + Math.random() * 1.5
+      }));
+      weights.sort((a, b) => b.score - a.score);
+      dropPieceInColumn(weights[0].col);
+    }
+
+    /*************************************************************************
+     * 8. WINNER'S TAROT / INTENTION CARD (WITH LIVE 2-PHONE SYNC)
+     *************************************************************************/
+    function getFilteredDeck() {
+      const combined = [...state.customCards, ...DEFAULT_TAROT_DECK];
+      let pool =
+        state.deckVibe === "all"
+          ? combined
+          : combined.filter((c) => c.vibeKey === state.deckVibe || c.isCustom);
+
+      if (pool.length < 3) pool = combined;
+      const fresh = pool.filter((c) => !state.usedCardTitles.has(c.title + c.question));
+      return fresh.length >= 3 ? fresh : pool;
+    }
+
+    function pickThreeSpreadCards() {
+      const pool = [...getFilteredDeck()];
+      const chosen = [];
+      while (chosen.length < 3 && pool.length > 0) {
+        const idx = Math.floor(Math.random() * pool.length);
+        chosen.push(pool.splice(idx, 1)[0]);
+      }
+      return chosen;
+    }
+
+    function isWinnerOnThisDevice() {
+      if (state.gameMode !== "online") return true;
+      return state.myRole === state.activeRoundWinner;
+    }
+
+    function isLoserOnThisDevice() {
+      if (state.gameMode !== "online") return true;
+      return state.myRole === state.activeRoundLoser;
+    }
+
+    function openTarotModal(winner, isDraw = false) {
+      state.activeRoundWinner = winner;
+      state.activeRoundLoser = winner === 1 ? 2 : 1;
+
+      const winnerName = winner === 1 ? state.p1Name : state.p2Name;
+      const loserName = state.activeRoundLoser === 1 ? state.p1Name : state.p2Name;
+
+      const romanRounds = ["I", "II", "III"];
+      document.getElementById("tarot-round-pill").textContent =
+        `Round ${romanRounds[state.currentRound - 1] || state.currentRound} of 3 Complete`;
+
+      document.getElementById("tarot-winner-title").textContent = isDraw
+        ? "Celestial Stalemate"
+        : `${winnerName} Claims Round ${romanRounds[state.currentRound - 1]}`;
+
+      if (state.gameMode === "online") {
+        document.getElementById("tarot-instruction-sub").textContent = isWinnerOnThisDevice()
+          ? `You won! Tap 1 of the 3 veiled Tarot cards to flip it on both phones for ${loserName}.`
+          : `${winnerName} won the round and is choosing 1 of the 3 veiled Tarot cards for you...`;
+      } else {
+        document.getElementById("tarot-instruction-sub").textContent =
+          `${winnerName}: Tap 1 of the 3 veiled Tarot cards to unlock ${loserName}'s question.`;
+      }
+
+      if (!state.spreadChoices || state.spreadChoices.length === 0) {
+        state.spreadChoices = pickThreeSpreadCards();
+      }
+
+      renderSpreadCardsInModal();
+
+      const focusedStage = document.getElementById("tarot-focused-stage");
+      focusedStage.classList.add("hidden");
+      focusedStage.classList.remove("flex");
+
+      const card3D = document.getElementById("tarot-3d-card");
+      card3D.classList.remove("is-flipped");
+
+      const modal = document.getElementById("tarot-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function renderSpreadCardsInModal() {
+      const romanRounds = ["I", "II", "III"];
+      const spreadLabels = ["Past Spark", "Present Tension", "Future Craving"];
+      const spreadContainer = document.getElementById("tarot-spread-picker");
+      spreadContainer.innerHTML = "";
+      spreadContainer.classList.remove("hidden");
+
+      const canPick = isWinnerOnThisDevice();
+
+      state.spreadChoices.forEach((cardObj, index) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.disabled = !canPick;
+        btn.className = `spread-pick-card tarot-face-back rounded-2xl p-3.5 h-44 sm:h-48 flex flex-col items-center justify-between text-center group ${
+          canPick ? "cursor-pointer" : "opacity-80 cursor-wait"
+        }`;
+        btn.innerHTML = `
+          <div class="w-full flex justify-between text-amber-300/60 text-xs">
+            <span>✦</span><span>${romanRounds[index]}</span><span>✦</span>
+          </div>
+          <div class="my-auto flex flex-col items-center">
+            <div class="w-12 h-12 rounded-full border border-amber-300/50 flex items-center justify-center group-hover:scale-110 transition">
+              <span class="font-serif-luxury text-lg text-amber-300">${cardObj.symbol || "✦"}</span>
+            </div>
+            <span class="font-serif-luxury text-xs text-amber-100/90 mt-2.5 tracking-wider uppercase">
+              ${spreadLabels[index]}
+            </span>
+          </div>
+          <span class="text-xs text-purple-300/80 group-hover:text-amber-300 transition">
+            ${canPick ? "Tap to Flip" : "Veiled"}
+          </span>
+        `;
+        if (canPick) {
+          btn.addEventListener("click", () => selectSpreadCard(index));
+        }
+        spreadContainer.appendChild(btn);
+      });
+    }
+
+    function selectSpreadCard(index) {
+      const card = state.spreadChoices[index];
+      revealTarotCard(card, false);
+    }
+
+    function revealTarotCard(card, fromRemote = false) {
+      state.selectedCard = card;
+      state.usedCardTitles.add(card.title + card.question);
+
+      if (!fromRemote && state.gameMode === "online") {
+        sendRealtimeEvent("TAROT_CARD_REVEALED", { card });
+      }
+
+      const loserName = state.activeRoundLoser === 1 ? state.p1Name : state.p2Name;
+
+      document.getElementById("tarot-spread-picker").classList.add("hidden");
+      const focusedStage = document.getElementById("tarot-focused-stage");
+      focusedStage.classList.remove("hidden");
+      focusedStage.classList.add("flex");
+
+      document.getElementById("tarot-instruction-sub").textContent =
+        `${loserName} must answer this card in text before the next round unlocks.`;
+
+      document.getElementById("card-numeral").textContent = card.numeral;
+      document.getElementById("card-vibe-badge").textContent = card.vibe;
+      document.getElementById("card-symbol").textContent = card.symbol || "✦";
+      document.getElementById("card-arcana-name").textContent = card.title;
+      document.getElementById("card-question-text").textContent = `"${card.question}"`;
+      document.getElementById("card-forfeit-label").textContent = `For: ${loserName}`;
+
+      document.getElementById("btn-reroll-card").classList.toggle("hidden", !isWinnerOnThisDevice());
+
+      const loserPanel = document.getElementById("loser-input-panel");
+      const winnerWaitPanel = document.getElementById("winner-waiting-panel");
+      const revealedPanel = document.getElementById("answer-revealed-panel");
+
+      revealedPanel.classList.add("hidden");
+
+      if (isLoserOnThisDevice()) {
+        loserPanel.classList.remove("hidden");
+        winnerWaitPanel.classList.add("hidden");
+        document.getElementById("loser-prompt-label").textContent =
+          state.gameMode === "online"
+            ? `Your Forfeit (${loserName}) — Type Your Answer to Send It Live:`
+            : `${loserName}'s Forfeit — Type Your Answer to Unlock Next Round:`;
+        const input = document.getElementById("loser-answer-input");
+        input.value = "";
+        validateAnswerInput();
+      } else {
+        loserPanel.classList.add("hidden");
+        winnerWaitPanel.classList.remove("hidden");
+        document.getElementById("winner-waiting-status").textContent =
+          `Waiting for ${loserName} to type their confession...`;
+      }
+
+      const submitText = document.getElementById("btn-submit-text");
+      submitText.textContent =
+        state.currentRound >= state.maxRounds
+          ? "Seal Final Answer"
+          : `Seal Answer & Send`;
+
+      const card3D = document.getElementById("tarot-3d-card");
+      card3D.classList.remove("is-flipped");
+      setTimeout(() => {
+        playTarotFlipShimmer();
+        triggerHaptic([20, 40, 20]);
+        card3D.classList.add("is-flipped");
+        spawnBurst(window.innerWidth / 2, window.innerHeight / 2 - 40, "gold", 30);
+      }, 90);
+    }
+
+    function rerollTarotCard() {
+      const pool = getFilteredDeck().filter((c) => c.question !== state.selectedCard?.question);
+      const nextCard = pool[Math.floor(Math.random() * pool.length)] || DEFAULT_TAROT_DECK[0];
+      const card3D = document.getElementById("tarot-3d-card");
+      card3D.classList.remove("is-flipped");
+      setTimeout(() => {
+        revealTarotCard(nextCard, false);
+      }, 280);
+    }
+
+    function validateAnswerInput() {
+      const val = document.getElementById("loser-answer-input").value.trim();
+      const btn = document.getElementById("btn-submit-answer");
+      const hint = document.getElementById("answer-hint");
+
+      if (state.gameMode === "online" && Date.now() - lastTypingSent > 900) {
+        lastTypingSent = Date.now();
+        sendRealtimeEvent("LOSER_TYPING", { hasText: val.length > 0 });
+      }
+
+      if (val.length >= 2) {
+        btn.disabled = false;
+        hint.textContent = "✦ Answer ready to be sealed";
+        hint.className = "text-xs text-amber-300";
+      } else {
+        btn.disabled = true;
+        hint.textContent = "Type your answer above to unlock the board";
+        hint.className = "text-xs text-purple-300/70";
+      }
+    }
+
+    function submitTarotAnswer() {
+      const answerText = document.getElementById("loser-answer-input").value.trim();
+      if (answerText.length < 2) return;
+
+      const winnerName = state.activeRoundWinner === 1 ? state.p1Name : state.p2Name;
+      const loserName = state.activeRoundLoser === 1 ? state.p1Name : state.p2Name;
+
+      if (state.gameMode === "online") {
+        sendRealtimeEvent("TAROT_ANSWER_SUBMITTED", {
+          round: state.currentRound,
+          winnerName,
+          loserName,
+          card: state.selectedCard,
+          answer: answerText
+        });
+      }
+
+      applySubmittedTarotAnswer(state.currentRound, winnerName, loserName, state.selectedCard, answerText, false);
+    }
+
+    function applySubmittedTarotAnswer(round, winnerName, loserName, card, answerText, fromRemote = false) {
+      if (!state.keepsakeHistory.some((h) => h.round === round)) {
+        state.keepsakeHistory.push({
+          round,
+          winnerName,
+          loserName,
+          card,
+          answer: answerText
+        });
+      }
+
+      triggerHaptic([25, 40]);
+      playWinChord();
+      updateHeaderUI();
+
+      // Show the sealed confession on both screens before moving to next round
+      if (state.currentRound < state.maxRounds) {
+        document.getElementById("loser-input-panel").classList.add("hidden");
+        document.getElementById("winner-waiting-panel").classList.add("hidden");
+
+        const nextStarter = state.startingPlayer === 1 ? state.p2Name : state.p1Name;
+        document.getElementById("next-starter-preview").textContent =
+          `Next round: ${nextStarter} plays 1st!`;
+
+        const revealedPanel = document.getElementById("answer-revealed-panel");
+        revealedPanel.classList.remove("hidden");
+        document.getElementById("revealed-author-label").textContent = `✦ ${loserName}'s Sealed Answer:`;
+        document.getElementById("revealed-answer-text").textContent = `"${answerText}"`;
+        document.getElementById("btn-proceed-next-round").textContent = `Start Round ${state.currentRound + 1} of 3 ✦`;
+        return;
+      }
+
+      proceedAfterAnswerReveal(true);
+    }
+
+    function proceedAfterAnswerReveal(fromRemote = false) {
+      if (!fromRemote && state.gameMode === "online") {
+        sendRealtimeEvent("PROCEED_NEXT_ROUND", {});
+      }
+
+      const modal = document.getElementById("tarot-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+
+      // Strictly alternate who plays 1st and 2nd for the next game!
+      state.startingPlayer = state.startingPlayer === 1 ? 2 : 1;
+
+      if (state.currentRound >= state.maxRounds) {
+        openKeepsakeModal(true);
+      } else {
+        state.currentRound++;
+        state.spreadChoices = [];
+        initBoard();
+      }
+    }
+
+    /*************************************************************************
+     * 9. LIVE 2-PHONE MULTIPLAYER MODAL & INVITE LINK GENERATOR
+     *************************************************************************/
+    function openMultiplayerModal() {
+      if (!state.roomCode) {
+        state.roomCode = randomRoomCode();
+      }
+      if (state.gameMode !== "online") {
+        state.gameMode = "online";
+        connectMultiplayerRoom(state.roomCode);
+      }
+
+      document.getElementById("mp-input-p1-name").value = state.p1Name;
+      document.getElementById("mp-input-p2-name").value = state.p2Name;
+      document.getElementById("input-room-code").value = state.roomCode;
+      updateRoleSelectorUI();
+      updateInviteUrlInput();
+      updateMultiplayerUI();
+
+      const modal = document.getElementById("mp-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function syncNamesFromInviteModal() {
+      const p1 = document.getElementById("mp-input-p1-name").value.trim();
+      const p2 = document.getElementById("mp-input-p2-name").value.trim();
+      state.p1Name = p1 || "Player 1";
+      state.p2Name = p2 || "Player 2";
+      savePreferencesToStorage();
+      updateHeaderUI();
+      updateInviteUrlInput();
+
+      if (state.gameMode === "online") {
+        sendRealtimeEvent("SETTINGS_UPDATED", {
+          p1Name: state.p1Name,
+          p2Name: state.p2Name,
+          deckVibe: state.deckVibe,
+          customCards: state.customCards
+        });
+      }
+    }
+
+    function closeMultiplayerModal() {
+      const modal = document.getElementById("mp-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+      updateHeaderUI();
+    }
+
+    function selectLocalRole(role) {
+      state.myRole = role;
+      updateRoleSelectorUI();
+      updateInviteUrlInput();
+      updateHeaderUI();
+      sendRealtimeEvent("HELLO_PRESENCE", { role: state.myRole });
+    }
+
+    function updateRoleSelectorUI() {
+      const btn1 = document.getElementById("role-btn-1");
+      const btn2 = document.getElementById("role-btn-2");
+      const partnerColorName = document.getElementById("partner-color-name");
+
+      if (state.myRole === 2) {
+        btn2.className = "p-2 rounded-2xl border-2 border-amber-400 bg-amber-500/15 text-left transition flex items-center gap-2.5 shadow";
+        btn1.className = "p-2 rounded-2xl border border-purple-500/25 bg-black/40 opacity-70 text-left transition flex items-center gap-2.5";
+        partnerColorName.textContent = "Royal Amethyst";
+      } else {
+        btn1.className = "p-2 rounded-2xl border-2 border-purple-400 bg-purple-500/20 text-left transition flex items-center gap-2.5 shadow";
+        btn2.className = "p-2 rounded-2xl border border-purple-500/25 bg-black/40 opacity-70 text-left transition flex items-center gap-2.5";
+        partnerColorName.textContent = "Celestial Gold";
+      }
+    }
+
+    function getPartnerInviteUrl() {
+      const partnerRole = state.myRole === 2 ? 1 : 2;
+      const baseUrl = window.location.origin + window.location.pathname;
+      const params = new URLSearchParams();
+      params.set("room", state.roomCode);
+      params.set("role", String(partnerRole));
+      params.set("p1", state.p1Name);
+      params.set("p2", state.p2Name);
+      return `${baseUrl}?${params.toString()}`;
+    }
+
+    function updateInviteUrlInput() {
+      const el = document.getElementById("input-invite-url");
+      if (el) el.value = getPartnerInviteUrl();
+    }
+
+    function joinCustomRoomCode() {
+      const val = document.getElementById("input-room-code").value.trim().toUpperCase();
+      if (val.length < 3) return;
+      state.partnerConnected = false;
+      state.gameMode = "online";
+      connectMultiplayerRoom(val);
+      updateInviteUrlInput();
+    }
+
+    function generateNewRoom() {
+      state.partnerConnected = false;
+      state.roomCode = randomRoomCode();
+      document.getElementById("input-room-code").value = state.roomCode;
+      connectMultiplayerRoom(state.roomCode);
+      updateInviteUrlInput();
+    }
+
+    function copyInviteLink() {
+      const url = getPartnerInviteUrl();
+      navigator.clipboard?.writeText(url);
+
+      const btn1 = document.getElementById("btn-copy-invite");
+      const btn2 = document.getElementById("btn-banner-copy");
+      if (btn1) {
+        btn1.innerHTML = "<span>✓ Invite Link Copied! Paste in iMessage</span>";
+        setTimeout(() => {
+          btn1.innerHTML = "<span>✦ Copy Invite Link</span>";
+        }, 2400);
+      }
+      if (btn2) {
+        btn2.textContent = "✓ Copied!";
+        setTimeout(() => {
+          btn2.textContent = "Copy Link";
+        }, 2200);
+      }
+    }
+
+    function nativeShareInviteLink() {
+      const url = getPartnerInviteUrl();
+      if (navigator.share) {
+        navigator.share({
+          title: "Amethyst Connect Four — Tarot Trilogy",
+          text: `Play Amethyst Connect Four with me! Tap to join our private board:`,
+          url
+        }).catch(() => {});
+      } else {
+        copyInviteLink();
+      }
+    }
+
+    function disableMultiplayerMode() {
+      state.gameMode = "pvp";
+      state.partnerConnected = false;
+      closeMultiplayerModal();
+      updateHeaderUI();
+    }
+
+    /*************************************************************************
+     * 10. 3-CARD KEEPSAKE READING & SETTINGS
+     *************************************************************************/
+    function openKeepsakeModal(isEndOfBunch = false) {
+      const modal = document.getElementById("keepsake-modal");
+      const list = document.getElementById("keepsake-cards-list");
+      const title = document.getElementById("keepsake-title");
+      const subtitle = document.getElementById("keepsake-subtitle");
+      const btnKeepPlaying = document.getElementById("btn-keep-playing");
+
+      if (isEndOfBunch) {
+        const champ =
+          state.p1Wins > state.p2Wins
+            ? `${state.p1Name} Wins the Trilogy (${state.p1Wins}–${state.p2Wins})!`
+            : state.p2Wins > state.p1Wins
+            ? `${state.p2Name} Wins the Trilogy (${state.p2Wins}–${state.p1Wins})!`
+            : `A Balanced Trilogy (${state.p1Wins}–${state.p2Wins})`;
+        title.textContent = champ;
+        subtitle.textContent = "All 3 rounds completed — here is your sealed 3-Card Tarot Spread:";
+        btnKeepPlaying.classList.add("hidden");
+        spawnBurst(window.innerWidth / 2, window.innerHeight / 3, "amethyst", 32);
+        spawnBurst(window.innerWidth / 2, window.innerHeight / 3, "gold", 32);
+      } else {
+        title.textContent = "Drawn Tarot Intention Cards";
+        subtitle.textContent = `Bunch of 3 Progress: Round ${state.currentRound} of ${state.maxRounds}`;
+        btnKeepPlaying.classList.remove("hidden");
+      }
+
+      if (state.keepsakeHistory.length === 0) {
+        list.innerHTML = `
+          <div class="p-6 rounded-2xl bg-purple-950/40 border border-purple-500/20 text-center text-xs text-purple-300/75">
+            Win a round of Connect Four to flip your first Winner's Tarot Card.
+          </div>
+        `;
+      } else {
+        list.innerHTML = state.keepsakeHistory
+          .map(
+            (item) => `
+          <div class="p-3.5 rounded-2xl bg-purple-950/60 border border-amber-400/30 flex flex-col gap-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <span class="font-serif-luxury font-bold text-amber-300 uppercase tracking-wider">
+                Round ${item.round} · ${item.card.numeral} — ${item.card.title}
+              </span>
+              <span class="px-2 py-0.5 rounded-full bg-purple-900/80 text-purple-200 text-xs">
+                Won by ${escapeHtml(item.winnerName)}
+              </span>
+            </div>
+            <p class="text-xs text-purple-200/90 italic">
+              "${escapeHtml(item.card.question)}"
+            </p>
+            <div class="mt-1 p-2.5 rounded-xl bg-black/45 border border-purple-400/25">
+              <span class="text-xs font-semibold text-amber-200">${escapeHtml(item.loserName)}'s Answer:</span>
+              <p class="text-xs sm:text-sm text-white mt-0.5">${escapeHtml(item.answer)}</p>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+      }
+
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function closeKeepsakeModal() {
+      const modal = document.getElementById("keepsake-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function startNewBunchOfThree(broadcast = true) {
+      if (broadcast && state.gameMode === "online") {
+        sendRealtimeEvent("NEW_BUNCH_OF_THREE", {});
+      }
+      closeKeepsakeModal();
+      state.currentRound = 1;
+      state.p1Wins = 0;
+      state.p2Wins = 0;
+      state.roundResults = [null, null, null];
+      state.keepsakeHistory = [];
+      state.spreadChoices = [];
+      initBoard();
+    }
+
+    function copyKeepsakeText() {
+      if (state.keepsakeHistory.length === 0) return;
+      const lines = [
+        `✦ AMETHYST CONNECT FOUR — 3-CARD TAROT READING ✦`,
+        `${state.p1Name} (${state.p1Wins}) vs. ${state.p2Name} (${state.p2Wins})`,
+        ""
+      ];
+      state.keepsakeHistory.forEach((item) => {
+        lines.push(`Round ${item.round}: ${item.card.title} (Won by ${item.winnerName})`);
+        lines.push(`Q: "${item.card.question}"`);
+        lines.push(`${item.loserName}: "${item.answer}"`);
+        lines.push("");
+      });
+
+      navigator.clipboard?.writeText(lines.join("\n"));
+      const btn = document.getElementById("btn-copy-reading");
+      const original = btn.textContent;
+      btn.textContent = "✓ Copied to Clipboard!";
+      setTimeout(() => (btn.textContent = original), 2000);
+    }
+
+    function loadSavedPreferences() {
+      try {
+        const saved = JSON.parse(localStorage.getItem("amethyst_c4_prefs") || "{}");
+        if (saved.p1Name && saved.p1Name !== "Her") state.p1Name = saved.p1Name;
+        if (saved.p2Name && saved.p2Name !== "You") state.p2Name = saved.p2Name;
+        if (saved.deckVibe) state.deckVibe = saved.deckVibe;
+        if (Array.isArray(saved.customCards)) state.customCards = saved.customCards;
+      } catch (e) {}
+
+      const params = new URLSearchParams(window.location.search);
+      const roomParam = params.get("room");
+      const roleParam = parseInt(params.get("role") || "0", 10);
+      const p1Param = params.get("p1");
+      const p2Param = params.get("p2");
+
+      if (p1Param) state.p1Name = p1Param;
+      if (p2Param) state.p2Name = p2Param;
+
+      if (roomParam) {
+        state.roomCode = roomParam.toUpperCase();
+        state.myRole = roleParam === 1 || roleParam === 2 ? roleParam : 1;
+        state.gameMode = "online";
+        connectMultiplayerRoom(state.roomCode);
+      }
+    }
+
+    function savePreferencesToStorage() {
+      try {
+        localStorage.setItem(
+          "amethyst_c4_prefs",
+          JSON.stringify({
+            p1Name: state.p1Name,
+            p2Name: state.p2Name,
+            deckVibe: state.deckVibe,
+            customCards: state.customCards
+          })
+        );
+      } catch (e) {}
+    }
+
+    function openSettingsModal() {
+      document.getElementById("input-p1-name").value = state.p1Name;
+      document.getElementById("input-p2-name").value = state.p2Name;
+      document.getElementById("select-game-mode").value = state.gameMode;
+      document.getElementById("select-deck-vibe").value = state.deckVibe;
+      updateCustomCardCountUI();
+
+      const modal = document.getElementById("settings-modal");
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+    }
+
+    function openSetupNames(focusPlayer = 1) {
+      openSettingsModal();
+      setTimeout(() => {
+        const targetId = focusPlayer === 2 ? "input-p2-name" : "input-p1-name";
+        const el = document.getElementById(targetId);
+        if (el) {
+          el.focus();
+          el.select();
+        }
+      }, 60);
+    }
+
+    function closeSettingsModal() {
+      const modal = document.getElementById("settings-modal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
+
+    function addCustomTarotCard() {
+      const input = document.getElementById("input-custom-question");
+      const q = input.value.trim();
+      if (q.length < 4) return;
+
+      state.customCards.unshift({
+        numeral: `CUSTOM ${state.customCards.length + 1}`,
+        title: "The Personal Intention",
+        vibe: "Custom ✦",
+        vibeKey: "spicy",
+        symbol: "♛",
+        question: q,
+        isCustom: true
+      });
+
+      input.value = "";
+      savePreferencesToStorage();
+      updateCustomCardCountUI();
+
+      if (state.gameMode === "online") {
+        sendRealtimeEvent("SETTINGS_UPDATED", {
+          p1Name: state.p1Name,
+          p2Name: state.p2Name,
+          deckVibe: state.deckVibe,
+          customCards: state.customCards
+        });
+      }
+    }
+
+    function updateCustomCardCountUI() {
+      const el = document.getElementById("custom-card-count");
+      el.textContent =
+        state.customCards.length > 0
+          ? `✦ ${state.customCards.length} custom card(s) added (synced live in 2-Phone mode)`
+          : "Your custom cards appear first in the 3-card Tarot draw.";
+    }
+
+    function saveSettings() {
+      const p1 = document.getElementById("input-p1-name").value.trim();
+      const p2 = document.getElementById("input-p2-name").value.trim();
+      state.p1Name = p1 || "Player 1";
+      state.p2Name = p2 || "Player 2";
+      const chosenMode = document.getElementById("select-game-mode").value;
+      state.deckVibe = document.getElementById("select-deck-vibe").value;
+
+      if (chosenMode === "online" && state.gameMode !== "online") {
+        state.gameMode = "online";
+        if (!state.roomCode) state.roomCode = randomRoomCode();
+        connectMultiplayerRoom(state.roomCode);
+      } else {
+        state.gameMode = chosenMode;
+      }
+
+      savePreferencesToStorage();
+      updateHeaderUI();
+      updateInviteUrlInput();
+      closeSettingsModal();
+
+      if (state.gameMode === "online") {
+        sendRealtimeEvent("SETTINGS_UPDATED", {
+          p1Name: state.p1Name,
+          p2Name: state.p2Name,
+          deckVibe: state.deckVibe,
+          customCards: state.customCards
+        });
+      } else if (state.gameMode === "ai" && state.currentPlayer === 2 && !state.roundOver) {
+        setTimeout(makeAIMove, 400);
+      }
+    }
+
+    function confirmResetBoard() {
+      if (state.gameMode === "online") {
+        sendRealtimeEvent("RESET_ROUND", {});
+      }
+      initBoard();
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    loadSavedPreferences();
+    initBoard();
+  </script>
+</body>
+</html>
